@@ -2,6 +2,7 @@
 
 Status: plan, written 2026-10-09 on Linux. Implementation needs a Mac with Xcode.
 The Rust backend in this repo is the fallback if this approach hits a wall.
+Product and design spec (screens, iOS 27 design, budgets): [ios-app-spec.md](ios-app-spec.md).
 
 ## Goals
 
@@ -44,8 +45,8 @@ References:
 - **Developer account:** paid Apple Developer Program membership. CloudKit containers need it.
 - **Mac:** Xcode, latest stable release.
 - **Test setup:** two physical iPhones signed in to **different** Apple IDs. Accepting shares on the simulator is unreliable.
-- **Minimum iOS:** iOS 17, because CKSyncEngine needs it. Prefer the current major version: there's no install base to protect, and newer releases include CloudKit fixes.
-- **Repo layout:** the Xcode project goes in `ios/` in this repo, next to the Rust fallback.
+- **Minimum iOS:** iOS 27 only (see the spec). CKSyncEngine needs iOS 17, so this is no constraint.
+- **Repo layout:** the Xcode project lives in its own repo, `bridzius/baby-burrito-ios`. The app structure below is that repo's layout.
 
 ## Data model
 
@@ -114,7 +115,7 @@ The sync engine's serialized state (`CKSyncEngine.State.Serialization`) is persi
 ## App structure
 
 ```
-ios/BabyBurito/
+BabyBurrito/
   Domain/          Feeding, FeedingKind, validation, Statistics (pure Swift, no frameworks)
   Persistence/     SwiftData models, FeedingStore (the only writer to SwiftData)
   Sync/            SyncCoordinator (owns 2 CKSyncEngines), RecordMapping, ConflictResolver, SyncStateStore
@@ -251,7 +252,7 @@ Each phase ends with something usable.
 
 - Check SwiftData sharing in the iOS 27 notes (see Architecture decision).
 - Bundle ID, iCloud container `iCloud.<reverse-domain>.babyburrito`, and capabilities: iCloud (CloudKit), Push Notifications, Background Modes → Remote notifications.
-- Xcode project in `ios/`, Swift 6 strict concurrency, Swift Testing target.
+- Xcode project in the `baby-burrito-ios` repo, Swift 6 strict concurrency, Swift Testing target.
 - Widget extension target, and an App Group (`group.<reverse-domain>.babyburrito`) shared by the app and the extension.
 
 ### Phase 1: local-only app (most of the value)
@@ -319,7 +320,6 @@ Each phase ends with something usable.
 - **Tap-to-log:** repeats the last feeding. No separate default in Settings.
 - **Nursing:** logged with duration and breast side (`left` / `right` / `both`). Bottles are logged with ml and kind.
 - **Feeding interval:** a property of the baby, synced, so both parents share it. Not per device.
-
-## Open questions
-
-- **Nursing timer:** should tapping the Live Activity during nursing *start* a running timer (shown live on the Lock Screen) and a second tap stop it, instead of logging a finished feeding with the last duration? It's a natural fit for Live Activities and doesn't change the schema, since a feeding is only written when it's stopped.
+- **Nursing timer:** not in v1; revisit once v1 is in daily use.
+- **Repo:** the app gets its own repo, `bridzius/baby-burrito-ios`.
+- **Multiple babies:** a baby switcher in Today's title menu; the Live Activity follows the selected baby.
